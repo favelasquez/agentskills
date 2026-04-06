@@ -36,7 +36,7 @@ export const AGENTS = {
     flag: 'copilot',
     homeDir: '.copilot',
     installDir: '.github/skills',
-    fileTemplate: '{skillName}/SKILL.md',
+    fileTemplate: '{skillName}/{skillName}.md',
   },
   cline: {
     id: 'cline',
