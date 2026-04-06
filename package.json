@@ -1,6 +1,6 @@
 {
   "name": "@favelasquez/agentskills",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Detect your stack and install AI agent skills — one command.",
   "type": "module",
   "bin": {

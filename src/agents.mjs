@@ -14,7 +14,7 @@ export const AGENTS = {
     name: 'Claude Code',
     flag: 'claude-code',
     homeDir: '.claude',
-    installDir: '.claude/skills',
+    installDir: '.claude/commands',
   },
   cursor: {
     id: 'cursor',
