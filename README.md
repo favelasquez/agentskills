@@ -139,6 +139,10 @@ Your Node.js version is too old. agentskills requires **Node.js 18 or higher**.
 
 Check your version with `node -v` and upgrade at [nodejs.org](https://nodejs.org).
 
+## Author
+
+Creado por https://github.com/favelasquez
+
 ## License
 
 MIT
