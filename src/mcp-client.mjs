@@ -1,8 +1,6 @@
 import { get }               from 'node:https';
-import { getBitbucketAuth } from './auth.mjs';
 
 const GITHUB_RAW    = 'https://raw.githubusercontent.com';
-const BITBUCKET_API = 'https://api.bitbucket.org/2.0/repositories';
 
 // ── HTTP fetch ────────────────────────────────────────────────
 
@@ -11,12 +9,6 @@ function fetchRaw(url, headers = {}) {
     get(url, { headers }, (res) => {
       if (res.statusCode === 301 || res.statusCode === 302) {
         return fetchRaw(res.headers.location, headers).then(resolve).catch(reject);
-      }
-      if (res.statusCode === 401 || res.statusCode === 403) {
-        return reject(new Error(
-          `Access denied (${res.statusCode}). ` +
-          `Re-authenticate in VS Code via the Atlassian extension and retry.`,
-        ));
       }
       if (res.statusCode !== 200) {
         return reject(new Error(`HTTP ${res.statusCode} fetching ${url}`));
@@ -31,49 +23,30 @@ function fetchRaw(url, headers = {}) {
 // ── URL builder ───────────────────────────────────────────────
 
 /**
- * GitHub:    { skillName, repo: 'owner/repo', subdir? }
- *            → https://raw.githubusercontent.com/{repo}/HEAD/{skillName}/SKILL.md
- *
- * Bitbucket: { skillName, bitbucket: 'workspace/repo', version }
- *            → https://bitbucket.org/{workspace/repo}/raw/master/src/skills/{skillName}/{version}/usage.md
+ * GitHub:    { skillName, repo: 'owner/repo', version? }
+ *            → https://raw.githubusercontent.com/{repo}/main/{skillName}/{version}/usage.md
  */
-function buildSkillUrl({ skillName, repo, subdir, bitbucket, version }) {
-  if (bitbucket) {
-    const ver = version || 'v1';
-    return `${BITBUCKET_API}/${bitbucket}/src/master/src/skills/${skillName}/${ver}/usage.md`;
-  }
+function buildSkillUrl({ skillName, repo, version }) {
   if (repo) {
-    const skillPath = subdir ? `${subdir}/${skillName}/SKILL.md` : `${skillName}/SKILL.md`;
-    return `${GITHUB_RAW}/${repo}/HEAD/${skillPath}`;
+    const ver = version || 'v1';
+    return `${GITHUB_RAW}/${repo}/main/${skillName}/${ver}/usage.md`;
   }
-  throw new Error(`Skill "${skillName}" has no repo or bitbucket field`);
+  throw new Error(`Skill "${skillName}" has no repo field`);
 }
 
 // ── Main export ───────────────────────────────────────────────
 
 /**
- * Fetches skill content from GitHub or Bitbucket.
- * Bitbucket skills use the token from git credential store (Atlassian Atlascode).
+ * Fetches skill content from GitHub.
  */
 export async function fetchSkillContents(skills, targetDir, agentInstallDir, fileTemplate = '{skillName}.md') {
   const results = [];
 
-  // Resolve Bitbucket auth once for the whole batch
-  const needsBitbucket = skills.some((s) => s.bitbucket);
-  let bbAuth = null;
-  if (needsBitbucket) {
-    bbAuth = await getBitbucketAuth();
-  }
-
   for (const skill of skills) {
-    const { skillName, bitbucket } = skill;
+    const { skillName } = skill;
     const url = buildSkillUrl(skill);
 
     const headers = {};
-    if (bitbucket && bbAuth) {
-      headers['Authorization'] = `Basic ${bbAuth}`;
-    }
-
     const content = await fetchRaw(url, headers);
     const fileName = fileTemplate.replace('{skillName}', skillName);
     const path     = `${targetDir}/${agentInstallDir}/${fileName}`;

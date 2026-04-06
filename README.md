@@ -111,7 +111,7 @@ These are always suggested regardless of the detected stack:
 
 ## Skills source
 
-Skills are fetched from a private Bitbucket repository. Access is required to download them. If you do not have access, contact the repository owner.
+Skills are fetched directly from the [favelasquez/repo-skills](https://github.com/favelasquez/repo-skills) GitHub repository. No authentication is required.
 
 ## Troubleshooting
 
