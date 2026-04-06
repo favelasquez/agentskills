@@ -13,9 +13,9 @@ function fetchRaw(url, headers = {}) {
       if (res.statusCode !== 200) {
         return reject(new Error(`HTTP ${res.statusCode} fetching ${url}`));
       }
-      let body = '';
-      res.on('data', (chunk) => { body += chunk; });
-      res.on('end', () => resolve(body));
+      const chunks = [];
+      res.on('data', (chunk) => { chunks.push(chunk); });
+      res.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
     }).on('error', reject);
   });
 }
@@ -47,7 +47,13 @@ export async function fetchSkillContents(skills, targetDir, agentInstallDir, fil
     const url = buildSkillUrl(skill);
 
     const headers = {};
-    const content = await fetchRaw(url, headers);
+    let content = await fetchRaw(url, headers);
+    
+    // Strip UTF-8 BOM if present so YAML frontmatter parses correctly
+    if (content.charCodeAt(0) === 0xFEFF) {
+      content = content.slice(1);
+    }
+
     const fileName = fileTemplate.replace('{skillName}', skillName);
     const path     = `${targetDir}/${agentInstallDir}/${fileName}`;
 
