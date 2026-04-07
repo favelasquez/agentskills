@@ -1,4 +1,5 @@
 import { get }               from 'node:https';
+import { resolve as resolvePath } from 'node:path';
 
 const GITHUB_RAW    = 'https://raw.githubusercontent.com';
 const GITHUB_API    = 'https://api.github.com';
@@ -61,7 +62,7 @@ export async function fetchSkillContents(skills, targetDir, agentInstallDir, fil
     }
 
     const fileName = fileTemplate.replace('{skillName}', skillName);
-    const path     = `${targetDir}/${agentInstallDir}/${fileName}`;
+    const path     = resolvePath(targetDir, agentInstallDir, fileName);
 
     results.push({ path, content, version });
   }

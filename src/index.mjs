@@ -18,6 +18,7 @@ import {
   printInstalledSkills,
   promptMainMenu,
   promptAgents,
+  promptCustomAgentPath,
   promptTechnologies,
   promptSkills,
   runWithProgress,
@@ -226,6 +227,14 @@ async function main() {
     if (!agentFlags.length) {
       const installedAgents = detectInstalledAgents();
       agentFlags = await promptAgents(installedAgents, Object.values(AGENTS));
+    }
+
+    // Handle custom agent — ask for folder and register it at runtime
+    if (agentFlags.includes('__custom__')) {
+      agentFlags = agentFlags.filter((f) => f !== '__custom__');
+      const customFolder = await promptCustomAgentPath();
+      AGENT_BY_FLAG['custom'] = { flag: 'custom', installDir: customFolder, fileTemplate: '{skillName}.md' };
+      agentFlags.push('custom');
     }
 
     // Step 2: Which technologies?

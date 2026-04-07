@@ -1,4 +1,5 @@
 import * as clack from '@clack/prompts';
+import { pickFolder } from './folder-picker.mjs';
 
 // ── Colors ────────────────────────────────────────────────────
 
@@ -168,6 +169,11 @@ export async function promptAgents(installedAgents, allAgents) {
         : fmt.dim(a.name),
       hint: detected.has(a.flag) ? undefined : 'not detected in home dir',
     })),
+    {
+      value: '__custom__',
+      label: fmt.bold('Custom agent'),
+      hint:  'choose any folder on your filesystem',
+    },
   ];
 
   const selected = await clack.multiselect({
@@ -343,6 +349,23 @@ export async function promptBitbucketCredentials() {
   if (clack.isCancel(pass)) { clack.cancel('Cancelled.'); process.exit(0); }
 
   return { user: user.trim(), pass: pass.trim() };
+}
+
+// ── Custom agent path ─────────────────────────────────────────
+
+export async function promptCustomAgentPath() {
+  clack.log.info(
+    `${fmt.bold('Custom agent')}  ${fmt.dim('—')}  Skills will be saved as ${fmt.cyan('<folder>/<skillName>.md')}`,
+  );
+
+  try {
+    const folder = await pickFolder(process.cwd());
+    clack.log.success(`Folder selected: ${fmt.cyan(folder)}`);
+    return folder;
+  } catch {
+    clack.cancel('Cancelled.');
+    process.exit(0);
+  }
 }
 
 // ── Manual skill fallback ─────────────────────────────────────
