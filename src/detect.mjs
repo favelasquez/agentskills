@@ -323,6 +323,64 @@ export function getInstalledSkillNames(projectDir) {
 }
 
 /**
+ * Extracts the version from a skill file's YAML frontmatter.
+ * Reads only from the `metadata.version` field (indented under metadata:).
+ * Handles both quoted (`version: "1.0"`) and unquoted (`version: v1`) values.
+ * Returns the version string or null if not found.
+ */
+function parseFrontmatterVersion(content) {
+  if (!content.startsWith('---')) return null;
+  const end = content.indexOf('\n---', 3);
+  if (end === -1) return null;
+  const fm = content.slice(3, end);
+  const match = fm.match(/^\s+version\s*:\s*["']?([^"'\n]+?)["']?\s*$/m);
+  return match ? match[1].trim() : null;
+}
+
+/**
+ * Returns installed skills per agent across all supported agents.
+ *
+ * Each skill entry:
+ *   name    — skill name
+ *   version — semantic version from metadata.version in the file
+ *   repo    — GitHub repo from lock (used to check for updates)
+ */
+export function getInstalledSkillsAll(projectDir, lock = { skills: {} }) {
+  return Object.values(AGENTS).map((agent) => {
+    const dir = join(projectDir, agent.installDir);
+    let skills = [];
+    try {
+      const entries = readdirSync(dir, { withFileTypes: true });
+      if (agent.fileTemplate && agent.fileTemplate !== '{skillName}.md') {
+        // e.g. Copilot: {skillName}/SKILL.md — one subdir per skill
+        skills = entries
+          .filter((e) => e.isDirectory())
+          .map((e) => {
+            const name = e.name;
+            const lockEntry = lock.skills[name];
+            let version = null;
+            try { version = parseFrontmatterVersion(readFileSync(join(dir, name, 'SKILL.md'), 'utf-8')); } catch {}
+            return { name, version, repo: lockEntry?.repo ?? null };
+          });
+      } else {
+        skills = entries
+          .filter((e) => e.isFile() && e.name.endsWith('.md'))
+          .map((e) => {
+            const name = e.name.replace(/\.md$/, '');
+            const lockEntry = lock.skills[name];
+            let version = null;
+            try { version = parseFrontmatterVersion(readFileSync(join(dir, e.name), 'utf-8')); } catch {}
+            return { name, version, repo: lockEntry?.repo ?? null };
+          });
+      }
+    } catch {
+      // dir doesn't exist — no skills installed for this agent
+    }
+    return { agentFlag: agent.flag, agentName: agent.name, skills };
+  });
+}
+
+/**
  * Detects which agents are installed by checking known home dirs.
  */
 export function detectInstalledAgents(home = homedir()) {

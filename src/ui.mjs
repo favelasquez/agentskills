@@ -58,7 +58,82 @@ export function printLogo() {
 // ── Intro / Outro ─────────────────────────────────────────────
 
 export function printIntro() {
-  clack.intro(fmt.bold(fmt.cyan(' agentskills ')));
+  clack.intro(fmt.bold(fmt.cyan(' Agent Skills - By https://github.com/favelasquez')));
+}
+
+// ── Main menu ─────────────────────────────────────────────────
+
+export async function promptMainMenu() {
+  const action = await clack.select({
+    message: fmt.bold('¿Qué querés hacer?'),
+    options: [
+      {
+        value: 'install',
+        label: fmt.bold('Nueva instalación'),
+        hint:  'detectar stack e instalar skills para tus agentes',
+      },
+      {
+        value: 'list',
+        label: fmt.bold('Ver skills instaladas'),
+        hint:  'listar skills con versión instalada y actualizaciones disponibles',
+      },
+      {
+        value: 'update',
+        label: fmt.bold('Actualizar skills'),
+        hint:  'actualizar todas las skills instaladas a su última versión',
+      },
+      {
+        value: 'exit',
+        label: fmt.dim('Salir'),
+      },
+    ],
+  });
+
+  if (clack.isCancel(action)) { clack.cancel('Cancelado.'); process.exit(0); }
+  return action;
+}
+
+// ── Installed skills summary ──────────────────────────────────
+
+/**
+ * updates: Map<skillName, latestVersion> — pass null to skip update badges.
+ */
+export function printInstalledSkills(agentSkills, { showIfEmpty = false, updates = null } = {}) {
+  const withSkills = agentSkills.filter((a) => a.skills.length > 0);
+
+  if (!withSkills.length) {
+    if (showIfEmpty) clack.log.warn('No hay skills instaladas en este proyecto.');
+    return;
+  }
+
+  const total = withSkills.reduce((n, a) => n + a.skills.length, 0);
+  const lines = withSkills.map(
+    ({ agentName, skills }) =>
+      `  ${fmt.bold(agentName)}\n` +
+      skills.map((s) => {
+        const meta      = updates?.get(s.name);
+        const hasUpdate = meta?.version && meta.version !== s.version;
+        const verStr    = s.version ? fmt.yellow(s.version) : fmt.dim('sin versión');
+        const badge     = hasUpdate ? `  ${fmt.green(`↑ ${meta.version} disponible`)}` : '';
+        return `    ${fmt.dim('·')}  ${fmt.cyan(s.name)}  ${verStr}${badge}`;
+      }).join('\n'),
+  );
+
+  const pendingCount = updates
+    ? [...updates.entries()].filter(([name, meta]) => {
+        const skill = withSkills.flatMap((a) => a.skills).find((s) => s.name === name);
+        return meta?.version && skill && meta.version !== skill.version;
+      }).length
+    : 0;
+
+  const updateNote = pendingCount > 0
+    ? `  ${fmt.green(`· ${pendingCount} actualización${pendingCount !== 1 ? 'es' : ''} disponible${pendingCount !== 1 ? 's' : ''}`)}`
+    : '';
+
+  clack.log.info(
+    `${fmt.bold('Skills instaladas')}  ${fmt.dim(`(${total} total)`)}${updateNote}\n` +
+    lines.join('\n'),
+  );
 }
 
 export function printOutro(installed, failed) {

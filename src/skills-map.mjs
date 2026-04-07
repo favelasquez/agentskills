@@ -24,7 +24,7 @@ export const SKILLS_MAP = [
     // Only suggest when Angular >= 13 — resolved dynamically in collectSkills
     minAngularVersion: 13,
     mcpSkills: [
-      { skillName: 'angular-modern-review', repo: 'favelasquez/repo-skills', version: 'v1' },
+      { skillName: 'angular-modern-review', repo: 'favelasquez/repo-skills' },
     ],
   },
   {
@@ -37,7 +37,7 @@ export const SKILLS_MAP = [
     minAngularVersion: 6,
     maxAngularVersion: 12,
     mcpSkills: [
-      { skillName: 'angular-mid-review', repo: 'favelasquez/repo-skills', version: 'v1' },
+      { skillName: 'angular-mid-review', repo: 'favelasquez/repo-skills' },
     ],
   },
   {
@@ -49,7 +49,7 @@ export const SKILLS_MAP = [
     },
     maxAngularVersion: 5,
     mcpSkills: [
-      { skillName: 'angular2-legacy-review', repo: 'favelasquez/repo-skills', version: 'v1' },
+      { skillName: 'angular2-legacy-review', repo: 'favelasquez/repo-skills' },
     ],
   },
   // ── Laravel (PHP) ────────────────────────────────────────────
@@ -64,8 +64,8 @@ export const SKILLS_MAP = [
       },
     },
     mcpSkills: [
-      { skillName: 'laravel-audit', repo: 'favelasquez/repo-skills', version: 'v1' },
-      { skillName: 'stack-detector', repo: 'favelasquez/repo-skills', version: 'v1' },
+      { skillName: 'laravel-audit', repo: 'favelasquez/repo-skills' },
+      { skillName: 'stack-detector', repo: 'favelasquez/repo-skills' },
     ],
   },
   // ── Python / FastAPI ─────────────────────────────────────────
@@ -80,7 +80,7 @@ export const SKILLS_MAP = [
       },
     },
     mcpSkills: [
-      { skillName: 'fastapi-audit', repo: 'favelasquez/repo-skills', version: 'v1' },
+      { skillName: 'fastapi-audit', repo: 'favelasquez/repo-skills' },
     ],
   },
   // ── C# / .NET ────────────────────────────────────────────────
@@ -97,8 +97,8 @@ export const SKILLS_MAP = [
       fileExtensions: ['.csproj', '.sln'],
     },
     mcpSkills: [
-      { skillName: 'csharp-ef-audit', repo: 'favelasquez/repo-skills', version: 'v1' },
-      { skillName: 'stack-detector', repo: 'favelasquez/repo-skills', version: 'v1' },
+      { skillName: 'csharp-ef-audit', repo: 'favelasquez/repo-skills' },
+      { skillName: 'stack-detector', repo: 'favelasquez/repo-skills' },
     ],
   },
   // ── AG Grid ──────────────────────────────────────────────────
@@ -132,7 +132,7 @@ export const SKILLS_MAP = [
       packages: ['@deepgram/sdk', 'deepgram'],
     },
     mcpSkills: [
-      { skillName: 'deepgram-expert', repo: 'favelasquez/repo-skills', version: 'v1' },
+      { skillName: 'deepgram-expert', repo: 'favelasquez/repo-skills' },
     ],
   },
   // ── Twilio ───────────────────────────────────────────────────
@@ -143,7 +143,7 @@ export const SKILLS_MAP = [
       packages: ['twilio', '@twilio/conversations', '@twilio/voice-sdk'],
     },
     mcpSkills: [
-      { skillName: 'twilio-expert', repo: 'favelasquez/repo-skills', version: 'v1' },
+      { skillName: 'twilio-expert', repo: 'favelasquez/repo-skills' },
     ],
   },
   // ── Docker ───────────────────────────────────────────────────
@@ -154,7 +154,7 @@ export const SKILLS_MAP = [
       configFiles: ['Dockerfile', 'docker-compose.yml', 'docker-compose.yaml', '.dockerignore'],
     },
     mcpSkills: [
-      { skillName: 'docker', repo: 'favelasquez/repo-skills', version: 'v1' },
+      { skillName: 'docker', repo: 'favelasquez/repo-skills' },
     ],
   },
 ];
@@ -166,16 +166,15 @@ export const SKILLS_MAP = [
  * These are workflow/tooling skills useful for any project.
  */
 export const UNIVERSAL_SKILLS = [
-  { skillName: 'commits',                  repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'review-pr',                repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'resolve-conflicts',        repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'gitignore-cleaner',        repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'update-repo',              repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'skill-creator',            repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'stack-detector',           repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'engram-expert',            repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'engram-install-setup',     repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'engram-memory-assistant',  repo: 'favelasquez/repo-skills', version: 'v1' },
+  { skillName: 'commits',                  repo: 'favelasquez/repo-skills' },
+  { skillName: 'resolve-conflicts',        repo: 'favelasquez/repo-skills' },
+  { skillName: 'gitignore-cleaner',        repo: 'favelasquez/repo-skills' },
+  { skillName: 'update-repo',              repo: 'favelasquez/repo-skills' },
+  { skillName: 'skill-creator',            repo: 'favelasquez/repo-skills' },
+  { skillName: 'stack-detector',           repo: 'favelasquez/repo-skills' },
+  { skillName: 'engram-expert',            repo: 'favelasquez/repo-skills' },
+  { skillName: 'engram-install-setup',     repo: 'favelasquez/repo-skills' },
+  { skillName: 'engram-memory-assistant',  repo: 'favelasquez/repo-skills' },
 ];
 
 /**
@@ -184,15 +183,15 @@ export const UNIVERSAL_SKILLS = [
  * Spec-Driven Development workflow skills — suggested as a group.
  */
 export const SDD_SKILLS = [
-  { skillName: 'sdd-init',    repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'sdd-explore', repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'sdd-propose', repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'sdd-spec',    repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'sdd-design',  repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'sdd-tasks',   repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'sdd-apply',   repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'sdd-verify',  repo: 'favelasquez/repo-skills', version: 'v1' },
-  { skillName: 'sdd-archive', repo: 'favelasquez/repo-skills', version: 'v1' },
+  { skillName: 'sdd-init',    repo: 'favelasquez/repo-skills' },
+  { skillName: 'sdd-explore', repo: 'favelasquez/repo-skills' },
+  { skillName: 'sdd-propose', repo: 'favelasquez/repo-skills' },
+  { skillName: 'sdd-spec',    repo: 'favelasquez/repo-skills' },
+  { skillName: 'sdd-design',  repo: 'favelasquez/repo-skills' },
+  { skillName: 'sdd-tasks',   repo: 'favelasquez/repo-skills' },
+  { skillName: 'sdd-apply',   repo: 'favelasquez/repo-skills' },
+  { skillName: 'sdd-verify',  repo: 'favelasquez/repo-skills' },
+  { skillName: 'sdd-archive', repo: 'favelasquez/repo-skills' },
 ];
 
 /**
