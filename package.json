@@ -1,8 +1,13 @@
 {
   "name": "@favelasquez/agentskills",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "Detect your stack and install AI agent skills — one command.",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/favelasquez/agentskills.git"
+  },
+  "homepage": "https://github.com/favelasquez/agentskills#readme",
   "bin": {
     "agentskills": "bin.cjs"
   },
