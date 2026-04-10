@@ -1,4 +1,4 @@
-<img src="./demo.svg" />
+<img src="https://raw.githubusercontent.com/favelasquez/agentskills/main/demo.svg" />
 
 
 > Detect your project's tech stack and install AI agent skills in one command.
