@@ -35,9 +35,12 @@ const fmt = {
 export function printLogo() {
   const cya  = c.cyan  + c.bold;
   const mag  = c.magenta + c.bold;
+  const wht  = c.white + c.bold;
   const rst  = c.reset;
 
   process.stdout.write([
+    '',
+    `  ${cya}${'═'.repeat(54)}${rst}`,
     '',
     `  ${cya} █████╗  ██████╗ ███████╗███╗   ██╗████████╗${rst}`,
     `  ${cya}██╔══██╗██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝${rst}`,
@@ -53,7 +56,9 @@ export function printLogo() {
     `  ${mag}███████║██║  ██╗██║███████╗███████╗███████║${rst}`,
     `  ${mag}╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚══════╝${rst}`,
     '',
-    `  ${c.dim}  Install AI agent skills for your stack — one command${rst}`,
+    `  ${cya}${'═'.repeat(54)}${rst}`,
+    '',
+    `  ${wht}Detect your stack and install AI agent skills${rst}`,
     '',
   ].join('\n'));
 }
@@ -61,8 +66,7 @@ export function printLogo() {
 // ── Intro / Outro ─────────────────────────────────────────────
 
 export function printIntro() {
-  console.log('');
-  console.log(fmt.bold(fmt.cyan(' ⚙  Agent Skills - By https://github.com/favelasquez')));
+  console.log(fmt.dim('  By https://github.com/favelasquez'));
   console.log('');
 }
 

@@ -31,6 +31,62 @@ The interactive CLI will:
 3. Ask which agents to install for
 4. Download and write skill files
 
+## Demo
+
+```
+$ npx @favelasquez/agentskills
+
+════════════════════════════════════════════════════════
+
+   █████╗  ██████╗ ███████╗███╗   ██╗████████╗
+  ██╔══██╗██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝
+  ███████║██║  ███╗█████╗  ██╔██╗ ██║   ██║
+  ██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║
+  ██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║
+  ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝
+
+  ███████╗██╗  ██╗██╗██╗     ██╗     ███████╗
+  ██╔════╝██║ ██╔╝██║██║     ██║     ██╔════╝
+  ███████╗█████╔╝ ██║██║     ██║     ███████╗
+  ╚════██║██╔═██╗ ██║██║     ██║     ╚════██║
+  ███████║██║  ██╗██║███████╗███████╗███████║
+  ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚══════╝
+
+  By https://github.com/favelasquez
+
+════════════════════════════════════════════════════════
+
+✔ What do you want to do? · Install
+  Detect your stack and install skills for your agents
+
+✔ Step 1 / 3 — Detecting your tech stack...
+  ◐ Scanning project...
+
+✔ Found: React, TypeScript, Node.js
+
+✔ Step 2 / 3 — Which AI agents do you use?
+  ◇ Select agents:
+  │ ✓ Copilot
+  │ ◇ Claude Code
+  │ ◇ Cursor
+  └
+
+✔ Step 3 / 3 — Which skills do you want?
+  ◇ Recommended skills:
+  │ ✓ commits (Conventional commit messages)
+  │ ✓ review-pr (Code review on pull requests)
+  │ ◇ react-patterns (React best practices)
+  └
+
+⠹ Installing 2 skills...
+
+✔ Installation complete!
+  ✓ commits → ~/.copilot/skills/commits.md
+  ✓ review-pr → ~/.copilot/skills/review-pr.md
+
+  Run: npx @favelasquez/agentskills --list
+```
+
 ## Options
 
 | Flag | Purpose |
