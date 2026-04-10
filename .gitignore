@@ -1,5 +1,7 @@
 .claude
 .github
+.codex
+.gemini
 node_modules/
 .agentskills-repos.json
 .agentskills-lock.json
