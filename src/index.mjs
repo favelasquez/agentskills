@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname } from 'node:path';
 
 import * as clack from '@clack/prompts';
 
 import { AGENTS, AGENT_FLAGS, AGENT_BY_FLAG } from './agents.mjs';
+import { parseArgs } from './parse-args.mjs';
 import { detectTechnologies, collectSkills, getInstalledSkillNames, getInstalledSkillsAll, detectInstalledAgents } from './detect.mjs';
 import { fetchSkillContents, checkUpdates } from './mcp-client.mjs';
 import { readLock, upsertLockSkills } from './lock.mjs';
@@ -23,42 +24,6 @@ import {
   promptSkills,
   runWithProgress,
 } from './ui.mjs';
-
-// ── Arg Parsing ──────────────────────────────────────────────
-
-function parseArgs(argv) {
-  const args = argv.slice(2);
-  const flags = {
-    agents: [],
-    dryRun: false,
-    yes: false,
-    dir: process.cwd(),
-    help: false,
-  };
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    if (arg === '--dry-run' || arg === '-d') {
-      flags.dryRun = true;
-    } else if (arg === '-y' || arg === '--yes') {
-      flags.yes = true;
-    } else if (arg === '--help' || arg === '-h') {
-      flags.help = true;
-    } else if (arg === '--dir' && args[i + 1]) {
-      flags.dir = resolve(args[++i]);
-    } else if (arg.startsWith('--')) {
-      const flag = arg.slice(2);
-      if (AGENT_FLAGS.includes(flag)) {
-        flags.agents.push(flag);
-      } else {
-        console.error(`Unknown flag: ${arg}`);
-        process.exit(1);
-      }
-    }
-  }
-
-  return flags;
-}
 
 function printHelp() {
   console.log(`
