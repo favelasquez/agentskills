@@ -1,6 +1,6 @@
 {
   "name": "@favelasquez/agentskills",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "Detect your stack and install AI agent skills — one command.",
   "type": "module",
   "bin": {
@@ -8,7 +8,8 @@
   },
   "files": [
     "src",
-    "bin.cjs"
+    "bin.cjs",
+    "demo.svg"
   ],
   "scripts": {
     "start": "node src/index.mjs",
