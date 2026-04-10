@@ -4,7 +4,7 @@
  * Uses @resvg/resvg-js (no browser needed) + gif-encoder-2.
  */
 import { Resvg } from '@resvg/resvg-js';
-import GifEncoder from 'gif-encoder-2';
+import GifWriter from 'omggif';
 import { PNG } from 'pngjs';
 import fs from 'fs';
 
@@ -76,7 +76,7 @@ const interY     = skillsOY + artSkills.length * CH + 22;
 const SVG_H      = interY + 190;
 
 const agentSvg  = renderArt(artAgent,  '#00d9ff', agentOX,  agentOY);
-const skillsSvg = renderArt(artSkills, '#ff4da6', skillsOX, skillsOY);
+const skillsSvg = renderArt(artSkills, '#d670d6', skillsOX, skillsOY);
 
 // ── Animation stages ───────────────────────────────────────────────────────────
 // Each stage defines which groups are visible. Matches the .d0-.d11 delays.
@@ -112,9 +112,7 @@ function buildSvgElements(visibleMask) {
   </g>
 
   <!-- Separator top -->
-  <g${vis(1)}>
-    <rect x="20" y="80" width="${SVG_W - 40}" height="1" fill="#1e3a52"/>
-  </g>
+  <g${vis(1)}>${makeSeparator(80)}</g>
 
   <!-- AGENT -->
   <g${vis(2)}>${agentSvg}</g>
@@ -126,9 +124,7 @@ function buildSvgElements(visibleMask) {
   </g>
 
   <!-- Separator bottom -->
-  <g${vis(4)}>
-    <rect x="20" y="${interY}" width="${SVG_W - 40}" height="1" fill="#1e3a52"/>
-  </g>
+  <g${vis(4)}>${makeSeparator(interY)}</g>
 
   <!-- Description -->
   <g${vis(5)}>
@@ -173,17 +169,29 @@ function buildSvgElements(visibleMask) {
   </g>`;
 }
 
+// Separator: a full line of ═ rendered as rects (no font dependency)
+// Separator: row of ═ chars as double-line rects (no font dependency)
+function makeSeparator(y, color = '#1e6e8a') {
+  const charW = 9, count = Math.floor((SVG_W - 40) / charW);
+  let out = '';
+  for (let i = 0; i < count; i++) {
+    const x = 20 + i * charW;
+    out += `<rect x="${x.toFixed(1)}" y="${(y - 1.5).toFixed(1)}" width="${(charW - 1).toFixed(1)}" height="1.2" fill="${color}" shape-rendering="crispEdges"/>`;
+    out += `<rect x="${x.toFixed(1)}" y="${(y + 0.5).toFixed(1)}" width="${(charW - 1).toFixed(1)}" height="1.2" fill="${color}" shape-rendering="crispEdges"/>`;
+  }
+  return out;
+}
+
 function buildFullSvg(visibleMask) {
   return `<svg viewBox="0 0 ${SVG_W} ${SVG_H}" xmlns="http://www.w3.org/2000/svg">
   <!-- Background -->
-  <rect width="${SVG_W}" height="${SVG_H}" rx="10" fill="#0d1b2a"/>
-  <!-- Header -->
-  <rect width="${SVG_W}" height="40" rx="10" fill="#111e2e"/>
-  <rect y="30" width="${SVG_W}" height="10" fill="#111e2e"/>
-  <circle cx="20" cy="20" r="6" fill="#ff5f57"/>
-  <circle cx="42" cy="20" r="6" fill="#febc2e"/>
-  <circle cx="64" cy="20" r="6" fill="#28c840"/>
-  <text x="${SVG_W/2}" y="25" text-anchor="middle" fill="#3d5066" font-size="12" font-family="'Courier New',monospace">bash &#x2014; npx @favelasquez/agentskills</text>
+  <rect width="${SVG_W}" height="${SVG_H}" fill="#0d1b2a"/>
+  <!-- Header bar -->
+  <rect width="${SVG_W}" height="36" fill="#111e2e"/>
+  <circle cx="20" cy="18" r="6" fill="#ff5f57"/>
+  <circle cx="40" cy="18" r="6" fill="#febc2e"/>
+  <circle cx="60" cy="18" r="6" fill="#28c840"/>
+  <text x="${SVG_W/2}" y="22" text-anchor="middle" fill="#3d5066" font-size="11" font-family="Consolas,Courier New,monospace">bash &#x2014; npx @favelasquez/agentskills</text>
   ${buildSvgElements(visibleMask)}
 </svg>`;
 }
@@ -197,7 +205,7 @@ for (const stage of STAGES) {
   const svgStr = buildFullSvg(stage.show);
   const resvg = new Resvg(svgStr, {
     fitTo: { mode: 'width', value: SVG_W },
-    font: { loadSystemFonts: false }
+    font: { loadSystemFonts: true }
   });
   const rendered = resvg.render();
   const pngBuf   = rendered.asPng();
@@ -207,20 +215,114 @@ for (const stage of STAGES) {
 }
 console.log(' done');
 
-// ── Encode GIF ────────────────────────────────────────────────────────────────
+// ── Fixed palette: exact colors we need in the GIF ───────────────────────────
+// GIF has 256 colors max — define ours explicitly so nothing gets approximated.
+
+const BG  = [0x0d, 0x1b, 0x2a]; // background navy
+
+const EXACT = [
+  BG,
+  [0x11, 0x1e, 0x2e], // header bar
+  [0xff, 0x5f, 0x57], // red dot
+  [0xfe, 0xbc, 0x2e], // yellow dot
+  [0x28, 0xc8, 0x40], // green dot
+  [0x00, 0xd9, 0xff], // AGENT cyan
+  [0xd6, 0x70, 0xd6], // SKILLS purple-pink  ← the star of the show
+  [0x1e, 0x6e, 0x8a], // separator teal
+  [0x3d, 0x50, 0x66], // title bar text
+  [0xcb, 0xd5, 0xe1], // command text
+  [0xe2, 0xe8, 0xf0], // bright white text
+  [0x8b, 0x94, 0x9e], // dim text
+  [0x48, 0xbb, 0x78], // green checkmark
+  [0x2d, 0x9c, 0xdb], // blue menu highlight
+  [0x88, 0x99, 0xaa], // gray menu text
+  [0x3d, 0x5a, 0x70], // darker description
+  [0x2d, 0x4a, 0x63], // author/by text
+  [0x00, 0x00, 0x00],
+  [0xff, 0xff, 0xff],
+];
+
+// Add 4 anti-alias steps between BG and each important color so text looks smooth
+function lerp(a, b, t) {
+  return [
+    Math.round(a[0] + (b[0] - a[0]) * t),
+    Math.round(a[1] + (b[1] - a[1]) * t),
+    Math.round(a[2] + (b[2] - a[2]) * t),
+  ];
+}
+
+const PALETTE = [...EXACT];
+const textColors = EXACT.slice(4); // skip BG, header, dots
+for (const c of textColors) {
+  for (let s = 1; s <= 3; s++) PALETTE.push(lerp(BG, c, s / 4));
+}
+// Deduplicate
+const PALETTE_SET = new Map();
+for (const c of PALETTE) {
+  const key = (c[0] << 16) | (c[1] << 8) | c[2];
+  if (!PALETTE_SET.has(key)) PALETTE_SET.set(key, c);
+}
+const PAL = [...PALETTE_SET.values()].slice(0, 256);
+
+// Nearest-color lookup using Euclidean distance
+function nearestIdx(r, g, b) {
+  let best = 0, bestD = Infinity;
+  for (let i = 0; i < PAL.length; i++) {
+    const dr = r - PAL[i][0], dg = g - PAL[i][1], db = b - PAL[i][2];
+    const d = dr*dr + dg*dg + db*db;
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  return best;
+}
+
+function quantizeFrame(pixels) {
+  const out = new Uint8ClampedArray(pixels.length);
+  for (let i = 0; i < pixels.length; i += 4) {
+    const r = pixels[i], g = pixels[i+1], b = pixels[i+2];
+    const idx = nearestIdx(r, g, b);
+    out[i]   = PAL[idx][0];
+    out[i+1] = PAL[idx][1];
+    out[i+2] = PAL[idx][2];
+    out[i+3] = 255;
+  }
+  return out;
+}
+
+// ── Encode GIF with omggif (full palette control) ─────────────────────────────
+
+console.log(`Encoding GIF with ${PAL.length}-color fixed palette…`);
 
 const { width, height } = frames[0];
-const encoder = new GifEncoder(width, height, 'neuquant', true);
-encoder.setRepeat(0);   // loop forever
-encoder.setQuality(10);
 
-encoder.start();
-for (const frame of frames) {
-  encoder.setDelay(frame.hold);
-  encoder.addFrame(new Uint8ClampedArray(frame.pixels));
+// omggif needs a flat RGB array for the global palette
+const globalPalette = new Array(256).fill(null).map((_, i) =>
+  i < PAL.length ? ((PAL[i][0] << 16) | (PAL[i][1] << 8) | PAL[i][2]) : 0
+);
+
+// Map RGBA pixels → palette indices (Uint8Array, one byte per pixel)
+function toIndexed(pixels) {
+  const indexed = new Uint8Array(width * height);
+  for (let i = 0, p = 0; i < pixels.length; i += 4, p++) {
+    indexed[p] = nearestIdx(pixels[i], pixels[i + 1], pixels[i + 2]);
+  }
+  return indexed;
 }
-encoder.finish();
 
-const gifBuf = Buffer.from(encoder.out.data);
+// Allocate output buffer (generous: 2MB)
+const buf = Buffer.alloc(2 * 1024 * 1024);
+const gw  = new GifWriter.GifWriter(buf, width, height, {
+  loop: 0,           // loop forever
+  palette: globalPalette,
+});
+
+for (const frame of frames) {
+  const indexed = toIndexed(frame.pixels);
+  gw.addFrame(0, 0, width, height, indexed, {
+    delay: Math.round(frame.hold / 10),   // GIF delay unit = 1/100 s
+    disposal: 2,
+  });
+}
+
+const gifBuf = buf.slice(0, gw.end());
 fs.writeFileSync('demo.gif', gifBuf);
-console.log(`\nWrote demo.gif — ${(gifBuf.length / 1024).toFixed(1)} KB`);
+console.log(`Wrote demo.gif — ${(gifBuf.length / 1024).toFixed(1)} KB`);
