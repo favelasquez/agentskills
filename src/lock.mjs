@@ -27,12 +27,18 @@ export function writeLock(projectDir, lock) {
 
 /**
  * Upserts skill entries into the lock file.
- * entries: [{ skillName, version, repo, agents: string[] }]
+ * entries: [{ skillName, version, repo?, baseUrl?, skillPath?, agents: string[] }]
  */
 export function upsertLockSkills(projectDir, entries) {
   const lock = readLock(projectDir);
-  for (const { skillName, version, repo, agents } of entries) {
-    lock.skills[skillName] = { version, repo, agents };
+  for (const { skillName, version, repo, baseUrl, skillPath, agents } of entries) {
+    lock.skills[skillName] = { 
+      version, 
+      repo,           // For central repo skills
+      baseUrl,        // For custom repo skills
+      skillPath,      // For custom repos (path within repo)
+      agents 
+    };
   }
   writeLock(projectDir, lock);
 }

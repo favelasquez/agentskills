@@ -74,6 +74,11 @@ export async function promptMainMenu() {
         hint:  'detectar stack e instalar skills para tus agentes',
       },
       {
+        value: 'custom-repo',
+        label: fmt.bold('Instalar desde repo personalizado'),
+        hint:  'instalar skills desde Vercel, tu org, o comunidad',
+      },
+      {
         value: 'list',
         label: fmt.bold('Ver skills instaladas'),
         hint:  'listar skills con versión instalada y actualizaciones disponibles',
@@ -380,4 +385,162 @@ export async function promptManualSkill() {
   if (clack.isCancel(skill)) { clack.cancel('Cancelled.'); process.exit(0); }
 
   return skill;
+}
+
+// ── Custom repository selection ───────────────────────────────
+
+export async function promptCustomRepoSource() {
+  const action = await clack.select({
+    message: fmt.bold('Install from custom repository'),
+    options: [
+      {
+        value: 'enter-url',
+        label: 'Enter repo URL',
+        hint: 'paste a GitHub URL to install from',
+      },
+      {
+        value: 'select-saved',
+        label: 'Select from saved repos',
+        hint: 'choose from your registered repositories',
+      },
+      {
+        value: 'cancel',
+        label: fmt.dim('Cancel'),
+      },
+    ],
+  });
+
+  if (clack.isCancel(action)) { clack.cancel('Cancelled.'); process.exit(0); }
+  return action;
+}
+
+export async function promptRepoUrl() {
+  const url = await clack.text({
+    message: 'GitHub repository URL:',
+    placeholder: 'https://github.com/owner/repo',
+    validate: (v) => {
+      const trimmed = v.trim();
+      if (!trimmed.includes('github.com')) {
+        return 'Must be a GitHub repository URL';
+      }
+      return undefined;
+    },
+  });
+
+  if (clack.isCancel(url)) { clack.cancel('Cancelled.'); process.exit(0); }
+  return url.trim();
+}
+
+export async function promptSaveCustomRepo(url) {
+  const save = await clack.confirm({
+    message: 'Save this repository for future use?',
+    initialValue: true,
+  });
+
+  if (clack.isCancel(save)) { clack.cancel('Cancelled.'); process.exit(0); }
+
+  if (save) {
+    const id = await clack.text({
+      message: 'Repo identifier (e.g., vercel-skills, my-org):',
+      placeholder: 'my-custom-repo',
+      validate: (v) => (v.trim() ? undefined : 'Required'),
+    });
+    if (clack.isCancel(id)) { clack.cancel('Cancelled.'); process.exit(0); }
+
+    const name = await clack.text({
+      message: 'Repo name (human-readable):',
+      placeholder: 'My Custom Skills Repository',
+      validate: (v) => (v.trim() ? undefined : 'Required'),
+    });
+    if (clack.isCancel(name)) { clack.cancel('Cancelled.'); process.exit(0); }
+
+    return {
+      save: true,
+      repo: {
+        id: id.trim(),
+        name: name.trim(),
+        url: url.trim(),
+        type: 'github',
+      },
+    };
+  }
+
+  return { save: false, repo: null };
+}
+
+export async function promptSelectSavedRepo(repos) {
+  const options = repos.map((r) => ({
+    value: r.id,
+    label: r.name,
+    hint: r.url ? `github.com/${r.url.split('/').slice(-2).join('/')}` : 'no URL',
+  }));
+
+  const selected = await clack.select({
+    message: 'Select a repository:',
+    options,
+  });
+
+  if (clack.isCancel(selected)) { clack.cancel('Cancelled.'); process.exit(0); }
+  return selected;
+}
+
+export async function promptSelectSkillsFromRepo(skills) {
+  const options = skills.map((s) => ({
+    value: s.skillName,
+    label: s.alreadyInstalled
+      ? `${fmt.dim(s.skillName)}  ${fmt.dim('● already installed')}`
+      : s.skillName,
+    disabled: s.alreadyInstalled,
+  }));
+
+  const selected = await clack.multiselect({
+    message: fmt.bold('Step 3 / 3')+ ' — Select skills to install from this repository:',
+    options,
+    required: true,
+  });
+
+  if (clack.isCancel(selected)) { clack.cancel('Cancelled.'); process.exit(0); }
+  return selected;
+}
+
+export function printDiscoveringSkills(repoName) {
+  const spinner = clack.spinner();
+  spinner.start(`Discovering skills in ${fmt.cyan(repoName)}…`);
+  return spinner;
+}
+
+export function printRepoInfo(repoInfo) {
+  if (repoInfo.error) {
+    clack.log.error(`Failed to load repo: ${repoInfo.error}`);
+    return;
+  }
+
+  clack.log.info(
+    `${fmt.bold(repoInfo.name)}  ${fmt.dim(`(${repoInfo.skillCount} skills available)`)}\n` +
+    `  ${fmt.cyan(repoInfo.baseUrl)}\n` +
+    `  ${fmt.dim('Available skills:')}\n` +
+    repoInfo.skills
+      .slice(0, 5)
+      .map((s) => `    · ${fmt.cyan(s.skillName)}`)
+      .join('\n') +
+    (repoInfo.skills.length > 5 ? `\n    · ${fmt.dim('...')}` : ''),
+  );
+}
+
+export async function promptSkillPath() {
+  const path = await clack.text({
+    message: '¿En qué carpeta están las skills? (déjalo vacío para la raíz)',
+    placeholder: '/skills',
+    validate: (v) => {
+      if (!v.trim()) return undefined; // Empty is valid (root level)
+      // Validate format: should start with / or be a valid relative path
+      if (!v.startsWith('/') && v.includes('/')) return 'Path should start with / or be empty';
+      return undefined;
+    },
+  });
+  
+  if (clack.isCancel(path)) { clack.cancel('Cancelled.'); process.exit(0); }
+  
+  // Normalize: remove leading slash for storage, but keep track of it
+  return path.trim() || '';
 }

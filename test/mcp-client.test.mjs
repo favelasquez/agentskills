@@ -10,6 +10,7 @@ import {
   fetchSkillContents,
   fetchLatestVersion,
   checkUpdates,
+  buildSkillUrl,
 } from '../src/mcp-client.mjs';
 
 beforeEach(() => {
@@ -183,5 +184,108 @@ describe('checkUpdates', () => {
     const result = await checkUpdates(skills);
     expect(result.get('bad-skill')).toBeNull();
     expect(result.get('good-skill')).not.toBeNull();
+  });
+});
+
+describe('buildSkillUrl', () => {
+  it('returns object with primary and alternatives', () => {
+    const result = buildSkillUrl({
+      skillName: 'my-skill',
+      repo: 'favelasquez/repo-skills',
+      version: 'v1',
+    });
+
+    expect(result).toHaveProperty('primary');
+    expect(result).toHaveProperty('alternatives');
+    expect(result).toHaveProperty('all');
+    expect(Array.isArray(result.all)).toBe(true);
+    expect(result.all.length).toBeGreaterThan(0);
+  });
+
+  it('converts github.com URLs to raw.githubusercontent.com for custom repos', () => {
+    const result = buildSkillUrl({
+      skillName: 'library-review',
+      baseUrl: 'https://github.com/wdm0006/python-skills',
+      skillPath: '/skills',
+      version: 'v1',
+    });
+
+    // All URLs should use raw.githubusercontent.com, not github.com
+    expect(result.all.every(url => url.includes('raw.githubusercontent.com'))).toBe(true);
+    expect(result.all.every(url => !url.includes('github.com/wdm0006'))).toBe(true);
+    // Primary URL should look for library-review.md in the skill folder root
+    expect(result.primary).toContain('skills/library-review/library-review.md');
+    expect(result.all[0]).toContain('library-review.md');
+    expect(result.all[1]).toContain('skill.md');
+    expect(result.all[2]).toContain('SKILL.md');
+    expect(result.all[3]).toContain('README.md');
+  });
+
+  it('prioritizes skill-name.md files in skill root for custom repos', () => {
+    const result = buildSkillUrl({
+      skillName: 'library-review',
+      baseUrl: 'https://github.com/wdm0006/python-skills',
+      skillPath: '/skills',
+      version: 'v1',
+    });
+
+    expect(result.primary).toContain('skills/library-review/library-review.md');
+    expect(result.all[0]).toContain('library-review.md');
+    expect(result.all[1]).toContain('skill.md');
+    expect(result.all[2]).toContain('SKILL.md');
+    expect(result.all[3]).toContain('README.md');
+  });
+
+  it('handles baseUrl already in raw.githubusercontent.com format', () => {
+    const result = buildSkillUrl({
+      skillName: 'test-skill',
+      baseUrl: 'https://raw.githubusercontent.com/owner/repo',
+      skillPath: '/skills',
+      version: 'v1',
+    });
+
+    expect(result.primary).toContain('raw.githubusercontent.com/owner/repo/main/skills/test-skill/skill.md');
+  });
+
+  it('handles baseUrl with trailing slash', () => {
+    const result = buildSkillUrl({
+      skillName: 'test-skill',
+      baseUrl: 'https://github.com/owner/repo/',
+      skillPath: '/skills',
+      version: 'v1',
+    });
+
+    expect(result.primary).toContain('raw.githubusercontent.com/owner/repo/main/skills/test-skill/test-skill.md');
+  });
+
+  it('handles baseUrl with .git suffix', () => {
+    const result = buildSkillUrl({
+      skillName: 'test-skill',
+      baseUrl: 'https://github.com/owner/repo.git',
+      skillPath: '/skills',
+      version: 'v1',
+    });
+
+    expect(result.primary).toContain('raw.githubusercontent.com/owner/repo/main/skills/test-skill/test-skill.md');
+  });
+
+  it('ignores version parameter for custom repos', () => {
+    const result = buildSkillUrl({
+      skillName: 'test',
+      baseUrl: 'https://github.com/test/repo',
+      skillPath: 'skills',
+      version: 'v1',
+    });
+
+    // Custom repos should NOT have version folders in the URL
+    expect(result.all.every(url => !url.includes('/v1/'))).toBe(true);
+  });
+
+  it('throws error when no repo or baseUrl provided', () => {
+    expect(() => {
+      buildSkillUrl({
+        skillName: 'my-skill',
+      });
+    }).toThrow();
   });
 });

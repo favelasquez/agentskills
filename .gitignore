@@ -1,3 +1,5 @@
 .claude
 .github
 node_modules/
+.agentskills-repos.json
+.agentskills-lock.json

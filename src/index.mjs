@@ -10,6 +10,8 @@ import { detectTechnologies, collectSkills, getInstalledSkillNames, getInstalled
 import { fetchSkillContents, checkUpdates } from './mcp-client.mjs';
 import { readLock, upsertLockSkills } from './lock.mjs';
 import { SKILLS_MAP, UNIVERSAL_SKILLS } from './skills-map.mjs';
+import { readReposConfig, addCustomRepo, getAllRepos, getRepo } from './custom-repos.mjs';
+import { discoverSkillsInRepo, validateRepoUrl, validateSkillPath, enrichRepoWithSkills, createInstallableSkills } from './skill-discovery.mjs';
 import {
   printLogo,
   printIntro,
@@ -23,6 +25,14 @@ import {
   promptTechnologies,
   promptSkills,
   runWithProgress,
+  promptCustomRepoSource,
+  promptRepoUrl,
+  promptSaveCustomRepo,
+  promptSelectSavedRepo,
+  promptSelectSkillsFromRepo,
+  promptSkillPath,
+  printDiscoveringSkills,
+  printRepoInfo,
 } from './ui.mjs';
 
 function printHelp() {
@@ -182,6 +192,160 @@ async function main() {
         clack.log.info(`${installed} actualizada${installed !== 1 ? 's' : ''}${failed > 0 ? `, ${failed} fallida${failed !== 1 ? 's' : ''}` : ''}.`);
       }
 
+      continue;
+    }
+
+    // ── Instalar desde repo personalizado ────────────────────────
+    if (menuAction === 'custom-repo') {
+      // Step 1: Which agents?
+      let agentFlags = flags.agents;
+      if (!agentFlags.length) {
+        const installedAgents = detectInstalledAgents();
+        agentFlags = await promptAgents(installedAgents, Object.values(AGENTS));
+      }
+
+      // Handle custom agent
+      if (agentFlags.includes('__custom__')) {
+        agentFlags = agentFlags.filter((f) => f !== '__custom__');
+        const customFolder = await promptCustomAgentPath();
+        AGENT_BY_FLAG['custom'] = { flag: 'custom', installDir: customFolder, fileTemplate: '{skillName}.md' };
+        agentFlags.push('custom');
+      }
+
+      // Step 2: Select repo source
+      const repoSource = await promptCustomRepoSource();
+      if (repoSource === 'cancel') continue;
+
+      let selectedRepoId;
+      let selectedRepo;
+      let skillPath = '';
+
+      if (repoSource === 'enter-url') {
+        const url = await promptRepoUrl();
+        
+        // Validate repo exists
+        const spinner = printDiscoveringSkills('repository');
+        let extractedSkillPath = '';
+        try {
+          const validation = await validateRepoUrl(url);
+          spinner.stop(`✔ Repository valid`);
+          selectedRepo = { id: '__temp__', url, baseUrl: validation.url };
+          extractedSkillPath = validation.skillPath || '';
+        } catch (err) {
+          spinner.stop(`✘ Validation failed`);
+          clack.log.error(err.message);
+          continue;
+        }
+
+        // Ask for skill path only if not extracted from URL
+        if (!extractedSkillPath) {
+          skillPath = await promptSkillPath();
+        } else {
+          skillPath = extractedSkillPath;
+          clack.log.info(`Skills path extracted from URL: ${skillPath}`);
+        }
+        
+        // Validate skill path contains skills
+        const pathSpinner = printDiscoveringSkills('skills at path');
+        let cleanedSkillPath = skillPath; // Keep track of cleaned path
+        try {
+          const pathValidation = await validateSkillPath(selectedRepo.baseUrl, skillPath);
+          cleanedSkillPath = pathValidation.path; // Use the cleaned path
+          pathSpinner.stop(`✔ Found ${pathValidation.skillCount} skills`);
+        } catch (err) {
+          pathSpinner.stop(`✘ Validation failed`);
+          clack.log.error(err.message);
+          continue;
+        }
+
+        // Ask to save (now including cleaned skillPath)
+        const saveResult = await promptSaveCustomRepo(url);
+        if (saveResult.save) {
+          try {
+            const repoToSave = { ...saveResult.repo, skillPath: cleanedSkillPath };
+            addCustomRepo(repoToSave, projectDir);
+            clack.log.success(`Repo saved: ${saveResult.repo.name}`);
+          } catch (err) {
+            clack.log.warn(`Could not save repo: ${err.message}`);
+          }
+        }
+        
+        // Use cleaned path for further processing
+        skillPath = cleanedSkillPath;
+      } else {
+        // Select from saved repos
+        const allRepos = getAllRepos(projectDir);
+        const customRepos = allRepos.filter((r) => !r.builtIn);
+
+        if (!customRepos.length) {
+          clack.log.warn('No saved repositories. Enter a URL instead.');
+          continue;
+        }
+
+        selectedRepoId = await promptSelectSavedRepo(customRepos);
+        selectedRepo = getRepo(selectedRepoId, projectDir);
+        skillPath = selectedRepo.skillPath || '';
+      }
+
+      // Prepare baseUrl
+      if (!selectedRepo.baseUrl) {
+        selectedRepo.baseUrl = selectedRepo.url;
+      }
+
+      // Step 3: Discover and select skills
+      const installedNames = new Set(getInstalledSkillNames(projectDir));
+      
+      let discovery;
+      try {
+        const spinner = printDiscoveringSkills(selectedRepo.name || selectedRepo.baseUrl);
+        discovery = await discoverSkillsInRepo(selectedRepo.id, selectedRepo.baseUrl, skillPath, installedNames);
+        spinner.stop(`✔ ${discovery.skills.length} skills discovered`);
+      } catch (err) {
+        clack.log.error(`Failed to discover skills: ${err.message}`);
+        continue;
+      }
+
+      if (!discovery.skills.length) {
+        clack.log.warn('No skills found in this repository.');
+        continue;
+      }
+
+      const selectedSkillNames = await promptSelectSkillsFromRepo(discovery.skills);
+      if (!selectedSkillNames.length) continue;
+
+      // Create installable skills with the path where they were found
+      const skillsToInstall = createInstallableSkills(discovery.skills, selectedSkillNames, selectedRepo.baseUrl, discovery.path);
+
+      // Install
+      const succeededSkills = [];
+      const { installed, failed } = await runWithProgress(
+        skillsToInstall,
+        agentFlags,
+        async (skill) => {
+          try {
+            const result = await installSkill(skill, agentFlags, projectDir);
+            if (result.success) succeededSkills.push({ ...skill, resolvedVersion: result.version });
+            return result;
+          } catch (err) {
+            return { success: false, output: err.message };
+          }
+        },
+      );
+
+      if (succeededSkills.length) {
+        upsertLockSkills(
+          projectDir,
+          succeededSkills.map((s) => ({
+            skillName: s.skillName,
+            version: s.resolvedVersion ?? s.version ?? null,
+            baseUrl: selectedRepo.baseUrl,
+            skillPath: s.skillPath,
+            agents: agentFlags,
+          })),
+        );
+      }
+
+      clack.log.info(`${installed} instalada${installed !== 1 ? 's' : ''}${failed > 0 ? `, ${failed} fallida${failed !== 1 ? 's' : ''}` : ''}.`);
       continue;
     }
 
