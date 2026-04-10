@@ -1,4 +1,4 @@
-<img src="./demo.svg" />
+<img src="./demo.gif" />
 
 
 > Detect your project's tech stack and install AI agent skills in one command.
