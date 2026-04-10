@@ -2,8 +2,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
-import * as clack from '@clack/prompts';
-
 import { AGENTS, AGENT_FLAGS, AGENT_BY_FLAG } from './agents.mjs';
 import { parseArgs } from './parse-args.mjs';
 import { detectTechnologies, collectSkills, getInstalledSkillNames, getInstalledSkillsAll, detectInstalledAgents } from './detect.mjs';
@@ -33,7 +31,8 @@ import {
   promptSkillPath,
   printDiscoveringSkills,
   printRepoInfo,
-} from './ui.mjs';
+  clack,
+} from './ui-enquirer.mjs';
 
 function printHelp() {
   console.log(`
